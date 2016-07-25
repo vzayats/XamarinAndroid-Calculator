@@ -1,28 +1,17 @@
 ﻿using System;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Android.App;
 using Android.Widget;
 using Android.OS;
+using NCalc;
+using static System.Double;
 
 namespace AndroidCalculator
 {
     [Activity(Label = "Android Calculator", MainLauncher = true, Icon = "@drawable/icon")]
     public class MainActivity : Activity
     {
-        private readonly Calc _calc;
-
-        public KeyInput? InputKey = KeyInput.Digit;
-        public enum Operations { Addition, Subtraction, Division, Multiply, Evolution }
-        public enum KeyInput { Digit, Operator, Equal, DecimalPoint, Sign }
-
-        public double? DigitalMemory;
-        public double? TotalMemory;
-
-        public Operations? OperateMemory;
-        public MainActivity()
-        {
-            _calc = new Calc(this);
-        }
-
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
@@ -48,161 +37,147 @@ namespace AndroidCalculator
             Button buttonClear = FindViewById<Button>(Resource.Id.buttonClear);
             Button buttonCe = FindViewById<Button>(Resource.Id.buttonCe);
             Button buttonSqrt = FindViewById<Button>(Resource.Id.buttonSqrt);
+            Button buttonSqr = FindViewById<Button>(Resource.Id.buttonSqr);
 
             EditText editTextOperate = FindViewById<EditText>(Resource.Id.editTextOperate);
             TextView textViewResult = FindViewById<TextView>(Resource.Id.textViewResult);
 
             buttonPoint.Click += delegate
             {
-                if (InputKey != KeyInput.Digit && InputKey != KeyInput.DecimalPoint && InputKey != KeyInput.Sign)
+                if (editTextOperate.Text.Trim().EndsWith("."))
                 {
-                    editTextOperate.Text = ".";
-                    InputKey = KeyInput.DecimalPoint;
-                    return;
+                    editTextOperate.Text += "";
                 }
-                if (!editTextOperate.Text.Contains("."))
+                else if (editTextOperate.Text.Trim().Length != 0)
                 {
-                    editTextOperate.Text = DigitalMemory + ".";
-                    InputKey = KeyInput.DecimalPoint;
+                    editTextOperate.Text += ".";
                 }
             };
 
             button1.Click += delegate
-            {                 
-                CurrentValueToMemory(editTextOperate.Text, "1");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+            {
+                editTextOperate.Text += "1";
             };
 
             button2.Click += delegate
             {
-                CurrentValueToMemory(editTextOperate.Text, "2");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+                editTextOperate.Text += "2";
             };
 
             button3.Click += delegate
             {
-                 
-                CurrentValueToMemory(editTextOperate.Text, "3");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+
+                editTextOperate.Text += "3";
             };
 
             button4.Click += delegate
-            {                 
-                CurrentValueToMemory(editTextOperate.Text, "4");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+            {
+                editTextOperate.Text += "4";
             };
 
             button5.Click += delegate
-            {                 
-                CurrentValueToMemory(editTextOperate.Text, "5");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+            {
+                editTextOperate.Text += "5";
             };
 
             button6.Click += delegate
-            {                
-                CurrentValueToMemory(editTextOperate.Text, "6");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+            {
+                editTextOperate.Text += "6";
             };
 
             button7.Click += delegate
             {
-                CurrentValueToMemory(editTextOperate.Text, "7");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+                editTextOperate.Text += "7";
             };
 
             button8.Click += delegate
             {
-                CurrentValueToMemory(editTextOperate.Text, "8");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+                editTextOperate.Text += "8";
             };
 
             button9.Click += delegate
             {
-                CurrentValueToMemory(editTextOperate.Text, "9");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
+                editTextOperate.Text += "9";
             };
 
             button0.Click += delegate
             {
-                CurrentValueToMemory(editTextOperate.Text, "0");
-                editTextOperate.Text = DigitalMemory.ToString();
-                _calc.Calculation();
-                InputKey = KeyInput.Digit;
-            };
-
-            buttonClear.Click += delegate
-            {
-                editTextOperate.Text = String.Empty;
-                ClearMemory();
+                editTextOperate.Text += "0";
             };
 
             buttonAddition.Click += delegate
             {
-                if (InputKey == KeyInput.Digit || InputKey == KeyInput.Operator)
+                if (editTextOperate.Text.Length != 0)
                 {
-                    PerformCalculation(Operations.Addition, editTextOperate);
+                    editTextOperate.Text += " + ";
                 }
             };
 
             buttonSubtraction.Click += delegate
             {
-                if (InputKey == KeyInput.Digit || InputKey == KeyInput.Operator)
+                if (editTextOperate.Text.Length != 0)
                 {
-                    PerformCalculation(Operations.Subtraction, editTextOperate);
+                    editTextOperate.Text += " - ";
                 }
             };
 
             buttonMultiply.Click += delegate
             {
-                if (InputKey == KeyInput.Digit || InputKey == KeyInput.Operator)
+                if (editTextOperate.Text.Length != 0)
                 {
-                    PerformCalculation(Operations.Multiply, editTextOperate);
+                    editTextOperate.Text += " * ";
                 }
             };
 
             buttonDivision.Click += delegate
             {
-                if (InputKey == KeyInput.Digit || InputKey == KeyInput.Operator)
+                if (editTextOperate.Text.Length != 0)
                 {
-                    PerformCalculation(Operations.Division, editTextOperate);
+                    editTextOperate.Text += " / ";
                 }
             };
 
+            Regex regex = new Regex(@"^-?\d*\.?\d*");
+
             buttonSqrt.Click += delegate
             {
-                PerformCalculation(Operations.Evolution, editTextOperate);
-                textViewResult.Text = string.Empty;
+                if (editTextOperate.Text != string.Empty & regex.IsMatch(editTextOperate.Text))
+                {
+                    double sqrt = Math.Sqrt(Parse(editTextOperate.Text.Trim()));
+                    textViewResult.Text = Convert.ToString(sqrt, CultureInfo.InvariantCulture);
+                }
+            };
+
+            buttonSqr.Click += delegate
+            {
+                if (editTextOperate.Text != string.Empty & regex.IsMatch(editTextOperate.Text))
+                {
+                    double sqrt = Math.Pow(Parse(editTextOperate.Text.Trim()), 2);
+                    textViewResult.Text = Convert.ToString(sqrt, CultureInfo.InvariantCulture);
+                }
             };
 
             buttonResult.Click += delegate
             {
-                InputKey = KeyInput.Equal;
-                textViewResult.Text = TotalMemory.ToString();
-                ClearMemory();
+                if (editTextOperate.Text != string.Empty)
+                {
+                    try
+                    {
+                        Expression expression = new Expression(editTextOperate.Text.Trim());
+                        object result = expression.Evaluate();
+
+                        textViewResult.Text = Convert.ToString(result);
+                    }
+                    catch (EvaluationException e)
+                    {
+                        textViewResult.Text = "Error: " + e.Message;
+                    }
+                }
             };
 
             buttonClear.Click += delegate
             {
-                ClearDisplayText(editTextOperate, textViewResult);
-                ClearMemory();
+                ClearDisplay(editTextOperate, textViewResult);
             };
 
             buttonCe.Click += delegate {
@@ -212,37 +187,11 @@ namespace AndroidCalculator
                 }
             };
         }
-        private void PerformCalculation(Operations operations, EditText editTextOperate)
-        {
-            OperateMemory = operations;
-            editTextOperate.Text = TotalMemory.ToString();
-            InputKey = KeyInput.Operator;
-        }
-        private void CurrentValueToMemory(string currentValue, string character)
-        {
-            if (InputKey == KeyInput.Digit || InputKey == KeyInput.DecimalPoint || InputKey == KeyInput.Sign)
-            {
-                DigitalMemory = double.Parse(currentValue + character);
-            }
-            else
-            {
-                DigitalMemory = double.Parse(character);
-            }
-        }
 
-        private void ClearDisplayText(EditText editTextOperate, TextView textViewResult)
+        private void ClearDisplay(EditText editTextOperate, TextView textViewResult)
         {
             editTextOperate.Text = string.Empty;
             textViewResult.Text = string.Empty;
         }
-
-        private void ClearMemory()
-        {
-            OperateMemory = null;
-            TotalMemory = null;
-            DigitalMemory = null;
-            InputKey = KeyInput.Digit;
-        }
     }
 }
-
